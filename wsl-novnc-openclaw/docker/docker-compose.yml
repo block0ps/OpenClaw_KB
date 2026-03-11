@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  openclaw-vnc:
+    build: .
+    ports:
+      - "6080:6080"
+      - "5900:5900"

@@ -1,0 +1,13 @@
+[Unit]
+Description=OpenClaw noVNC
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/openclaw-wsl-novnc
+ExecStart=/opt/openclaw-wsl-novnc/start.sh
+ExecStop=/opt/openclaw-wsl-novnc/stop.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
