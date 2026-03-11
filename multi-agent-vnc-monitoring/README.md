@@ -1,120 +1,90 @@
-# Multi‑Agent Browser Monitoring with Automatic Display Allocation
+# **Multi-Agent Browser Monitoring (Automatic Display Allocation)**
 
-This guide explains how to run multiple OpenClaw agents simultaneously while providing each agent with its own:
+Run multiple OpenClaw agents simultaneously while giving each agent an isolated display, VNC port, and noVNC web viewer.
 
-X display  
-VNC port  
-noVNC monitoring interface  
+## 🏗️ **Architecture**
 
-This allows operators to visually monitor agent activity independently.
-
---------------------------------------------------
-
-ARCHITECTURE
-
+```text
 Agent
-↓
-Xvfb display
-↓
-x11vnc
-↓
-websockify
-↓
-noVNC browser viewer
+  -> Xvfb display
+  -> x11vnc
+  -> websockify
+  -> noVNC browser viewer
+```
 
-Each agent runs in its own isolated display.
+Each agent runs in an isolated display namespace.
 
---------------------------------------------------
+## 📊 **Example Display Allocation**
 
-EXAMPLE DISPLAY ALLOCATION
+| Agent | DISPLAY | VNC Port | noVNC URL |
+| --- | --- | --- | --- |
+| research-agent | :99 | 5900 | http://localhost:6080/vnc.html |
+| email-agent | :100 | 5901 | http://localhost:6081/vnc.html |
+| crawler-agent | :101 | 5902 | http://localhost:6082/vnc.html |
 
-Agent              DISPLAY     VNC Port     noVNC URL
----------------------------------------------------------
-research-agent     :99         5900         http://localhost:6080
-email-agent        :100        5901         http://localhost:6081
-crawler-agent      :101        5902         http://localhost:6082
+## 🗂️ **Recommended Operator Map File**
 
-This mapping allows operators to quickly identify which browser belongs to which agent.
+Use a simple mapping file like `agent-monitoring-map.md`:
 
---------------------------------------------------
+```text
+| Agent Name     | DISPLAY | VNC Port | noVNC URL                      |
+|----------------|---------|----------|--------------------------------|
+| research-agent | :99     | 5900     | http://host:6080/vnc.html      |
+| email-agent    | :100    | 5901     | http://host:6081/vnc.html      |
+| crawler-agent  | :101    | 5902     | http://host:6082/vnc.html      |
+```
 
-RECOMMENDED OPERATOR MAP FILE
+## 🚀 **Example Multi-Agent Launch Script**
 
-Maintain a simple file such as:
-
-agent-monitoring-map.md
-
-Example contents:
-
-Agent Name        DISPLAY     VNC Port     noVNC URL
----------------------------------------------------------
-research-agent    :99         5900         http://host:6080
-email-agent       :100        5901         http://host:6081
-crawler-agent     :101        5902         http://host:6082
-
---------------------------------------------------
-
-EXAMPLE MULTI‑AGENT LAUNCH SCRIPT
-
+```bash
 #!/usr/bin/env bash
 
-AGENT_NAME=$1
-DISPLAY_NUM=$2
-VNC_PORT=$3
-WEB_PORT=$4
+set -euo pipefail
+
+AGENT_NAME="$1"
+DISPLAY_NUM="$2"
+VNC_PORT="$3"
+WEB_PORT="$4"
 
 echo "Starting agent: $AGENT_NAME"
 
-Xvfb :$DISPLAY_NUM -screen 0 1920x1080x24 &
+Xvfb ":$DISPLAY_NUM" -screen 0 1920x1080x24 &
 sleep 2
 
-export DISPLAY=:$DISPLAY_NUM
+export DISPLAY=":$DISPLAY_NUM"
 
 openbox &
 
 x11vnc \
--display :$DISPLAY_NUM \
--rfbport $VNC_PORT \
--forever \
--shared &
+  -display ":$DISPLAY_NUM" \
+  -rfbport "$VNC_PORT" \
+  -forever \
+  -shared &
 
 websockify \
---web /usr/share/novnc \
-$WEB_PORT localhost:$VNC_PORT &
+  --web /usr/share/novnc \
+  "$WEB_PORT" "localhost:$VNC_PORT" &
 
 openclaw --agent "$AGENT_NAME"
+```
 
---------------------------------------------------
+## 🧪 **Example Usage**
 
-EXAMPLE USAGE
-
+```bash
 ./launch-agent.sh research-agent 99 5900 6080
-
 ./launch-agent.sh email-agent 100 5901 6081
-
 ./launch-agent.sh crawler-agent 101 5902 6082
+```
 
---------------------------------------------------
+## 👀 **Operator Access**
 
-OPERATOR ACCESS
+- Agent 1: [http://localhost:6080/vnc.html](http://localhost:6080/vnc.html)
+- Agent 2: [http://localhost:6081/vnc.html](http://localhost:6081/vnc.html)
+- Agent 3: [http://localhost:6082/vnc.html](http://localhost:6082/vnc.html)
 
-Agent 1
-http://localhost:6080/vnc.html
+## ✅ **Best Practices**
 
-Agent 2
-http://localhost:6081/vnc.html
-
-Agent 3
-http://localhost:6082/vnc.html
-
---------------------------------------------------
-
-BEST PRACTICES
-
-Assign stable ports per agent
-
-Store mappings in version control
-
-Use reverse proxy + authentication in production
-
-Combine with browser session recording for debugging
+- Keep stable display and port assignments per agent.
+- Store mapping files in version control.
+- Use reverse proxy + authentication in production.
+- Pair this setup with session recording for debugging and audits.

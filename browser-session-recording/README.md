@@ -1,114 +1,123 @@
-# Automatic Browser Recording and Session Playback
+# **Automatic Browser Session Recording and Playback**
 
-This guide explains how to record OpenClaw browser sessions for debugging, auditing, and operational review.
+Record and replay OpenClaw browser sessions for debugging, auditing, and operational review.
 
-Session recording allows operators to replay agent actions and diagnose failures.
+## 🎯 **Why Record Sessions**
 
---------------------------------------------------
+Session recordings make it easier to:
 
-RECORDING OPTIONS
+- Replay agent behavior after failures.
+- Validate agent actions for audits.
+- Share exact browser timelines during debugging.
 
---------------------------------------------------
+## 🎥 **Option 1: Playwright Video Recording**
 
-OPTION 1 — PLAYWRIGHT VIDEO RECORDING
+If your OpenClaw automation uses Playwright, enable built-in context recording.
 
-If OpenClaw uses Playwright automation, enable built‑in recording.
+```javascript
+const context = await browser.newContext({
+  recordVideo: { dir: "./recordings/" },
+});
+```
 
-Example configuration concept:
+Example output:
 
-recordVideo directory set to ./recordings/
-
-Example output files:
-
+```text
 recordings/
-agent1-session.webm
-agent2-session.webm
+  agent1-session.webm
+  agent2-session.webm
+```
 
 Advantages:
 
-low overhead
+- Low overhead.
+- Automatic segmentation.
+- Easy playback.
 
-automatic segmentation
+## 🎞️ **Option 2: FFmpeg Display Recording**
 
-easy playback
+Capture an X display directly:
 
---------------------------------------------------
-
-OPTION 2 — FFMPEG DISPLAY RECORDING
-
-Capture the X display directly.
-
-Example command concept:
-
-ffmpeg capturing display :99 at 1920x1080 resolution and 30fps
+```bash
+ffmpeg \
+  -video_size 1920x1080 \
+  -framerate 30 \
+  -f x11grab \
+  -i :99.0 \
+  -c:v libx264 \
+  -preset veryfast \
+  -crf 23 \
+  "recordings/agent1/session-$(date +%F-%H%M%S).mp4"
+```
 
 Example display mapping:
 
+```text
 :99  -> agent1
-
 :100 -> agent2
-
 :101 -> agent3
+```
 
---------------------------------------------------
+## 🧰 **Example Recording Script**
 
-EXAMPLE RECORDING SCRIPT
-
+```bash
 #!/usr/bin/env bash
 
-DISPLAY_NUM=$1
-AGENT_NAME=$2
+set -euo pipefail
 
-ffmpeg capture display :DISPLAY_NUM
+DISPLAY_NUM="$1"
+AGENT_NAME="$2"
+OUTPUT_DIR="recordings/$AGENT_NAME"
+TIMESTAMP="$(date +%F-%H%M%S)"
 
-output file format:
+mkdir -p "$OUTPUT_DIR"
 
-AGENT_NAME-timestamp.mp4
+ffmpeg \
+  -video_size 1920x1080 \
+  -framerate 30 \
+  -f x11grab \
+  -i ":${DISPLAY_NUM}.0" \
+  -c:v libx264 \
+  -preset veryfast \
+  -crf 23 \
+  "$OUTPUT_DIR/session-$TIMESTAMP.mp4"
+```
 
---------------------------------------------------
+## 📁 **Recommended Recording Directory Layout**
 
-RECOMMENDED RECORDING DIRECTORY
-
+```text
 recordings/
+  agent1/
+    session-2026-03-10-101500.mp4
+  agent2/
+    session-2026-03-10-104200.mp4
+```
 
-agent1/
-session-2026-03-10.mp4
+## ♻️ **Retention Policy**
 
-agent2/
-session-2026-03-10.mp4
+Example: keep recordings for 7 days.
 
---------------------------------------------------
+```bash
+find recordings -type f -mtime +7 -delete
+```
 
-RETENTION POLICY
+## ▶️ **Session Playback**
 
-Recommended retention:
+Common playback options:
 
-Keep recordings for 7 days
+- VLC
+- Browser playback for `.webm`
+- Internal debugging tooling
 
-Rotate automatically using cron
+Example local playback:
 
-Example cleanup concept:
+```bash
+vlc recordings/agent1/session-2026-03-10-101500.mp4
+```
 
-delete recordings older than 7 days
+Typical debugging flow:
 
---------------------------------------------------
-
-SESSION PLAYBACK
-
-Recordings can be reviewed using:
-
-VLC
-
-browser playback
-
-internal debugging tools
-
-Typical debugging workflow:
-
-Agent error occurs
-
-Locate timestamp
-
-Load recording
-
-Review browser activity
+1. Agent error occurs.
+2. Locate the matching timestamp.
+3. Load the recording.
+4. Review browser activity step-by-step.

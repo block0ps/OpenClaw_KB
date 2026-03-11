@@ -1,139 +1,119 @@
-# OpenClaw noVNC Setup (WSL)
+# **OpenClaw noVNC Setup (WSL)**
 
-This guide explains how to run OpenClaw browser sessions inside a virtual display in WSL and monitor them through a browser using noVNC.
+Run OpenClaw browser sessions inside a virtual display in WSL and monitor them in your browser with noVNC.
 
-Open the viewer:
+## 🧭 **Overview**
 
-http://localhost:6080/vnc.html
+Open the noVNC viewer:
 
----
+[http://localhost:6080/vnc.html](http://localhost:6080/vnc.html)
 
-# Architecture
+## 🏗️ **Architecture**
 
-OpenClaw  
-↓  
-Xvfb virtual display  
-↓  
-x11vnc  
-↓  
-websockify  
-↓  
-noVNC viewer  
+```text
+OpenClaw
+  -> Xvfb (virtual display)
+  -> x11vnc
+  -> websockify
+  -> noVNC viewer
+```
 
----
+## ⚙️ **Install Dependencies**
 
-# Install Dependencies
-
-Run:
-
+```bash
 ./install.sh
+```
 
----
+## ▶️ **Start the Environment**
 
-# Start the Environment
-
-Run:
-
+```bash
 ./start.sh
+```
 
 Then open:
 
-http://localhost:6080/vnc.html
+[http://localhost:6080/vnc.html](http://localhost:6080/vnc.html)
 
----
+## ⏹️ **Stop the Environment**
 
-# Stop the Environment
-
-Run:
-
+```bash
 ./stop.sh
+```
 
----
+## ✅ **Health Check**
 
-# Health Check
-
-Run:
-
+```bash
 ./healthcheck.sh
+```
 
----
+## 🤖 **Run OpenClaw**
 
-# Running OpenClaw
+Set the display for OpenClaw browser sessions:
 
-Ensure OpenClaw inherits the display variable:
-
+```bash
 export DISPLAY=localhost:99.0
+```
 
-Then start OpenClaw:
+Start OpenClaw:
 
+```bash
 openclaw
-
-or
-
+# or
 DISPLAY=localhost:99.0 node openclaw
+```
 
-Any browser sessions launched by OpenClaw will appear in the noVNC viewer.
+Any browser sessions launched by OpenClaw should appear in noVNC.
 
----
+## 🐳 **Docker Deployment**
 
-# Docker Deployment
-
-Run:
-
+```bash
 cd docker
-
 docker compose up --build
+```
 
-Then access:
+Then open:
 
-http://localhost:6080/vnc.html
+[http://localhost:6080/vnc.html](http://localhost:6080/vnc.html)
 
----
+## 🛠️ **systemd Service**
 
-# systemd Service
-
-Install the service:
-
+```bash
 sudo cp systemd/openclaw-vnc.service /etc/systemd/system/
-
 sudo systemctl daemon-reload
-
-Enable the service:
-
 sudo systemctl enable openclaw-vnc
-
-Start it:
-
 sudo systemctl start openclaw-vnc
+```
 
----
-
-# Troubleshooting
+## 🧪 **Troubleshooting**
 
 Verify the display:
 
+```bash
 DISPLAY=localhost:99.0 xdpyinfo
+```
 
 Test the display:
 
+```bash
 DISPLAY=localhost:99.0 xclock &
+```
 
-If the clock appears in noVNC, the display is working correctly.
+If the clock appears in noVNC, the display is working.
 
----
+## 📌 **WSL Notes**
 
-# WSL Notes
-
-WSL has two X11 quirks:
-
-### `/tmp/.X11-unix` is read‑only
+### `/tmp/.X11-unix` is read-only
 
 Use TCP display instead:
 
-DISPLAY=localhost:99.0
+```bash
+export DISPLAY=localhost:99.0
+```
 
-### MIT‑SHM crashes with virtual displays
+### MIT-SHM can crash with virtual displays
 
 Use:
 
+```bash
 x11vnc -noshm
+```
